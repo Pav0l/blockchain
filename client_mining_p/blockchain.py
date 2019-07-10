@@ -149,32 +149,26 @@ def mine():
     if not all(k in body for k in required):
         return 'Missing proof', 400
 
-    if blockchain.valid_proof(body['last_proof'], body['proof']):
-        # We must receive a reward for finding the proof.
-        # The sender is "0" to signify that this node has mine a new coin
-        blockchain.new_transaction(
-            sender="0",
-            recipient=node_identifier,
-            amount=1,
-        )
+    # We must receive a reward for finding the proof.
+    # The sender is "0" to signify that this node has mine a new coin
+    blockchain.new_transaction(
+        sender="0",
+        recipient=node_identifier,
+        amount=1,
+    )
 
-        # Forge the new BLock by adding it to the chain
-        previous_hash = blockchain.hash(blockchain.last_block)
-        block = blockchain.new_block(body['proof'], previous_hash)
+    # Forge the new BLock by adding it to the chain
+    previous_hash = blockchain.hash(blockchain.last_block)
+    block = blockchain.new_block(body['proof'], previous_hash)
 
-        response = {
-            'message': "New Block Forged",
-            'index': block['index'],
-            'transactions': block['transactions'],
-            'proof': block['proof'],
-            'previous_hash': block['previous_hash'],
-        }
-        return jsonify(response), 200
-    else:
-        response = {
-            'message': "Invalid proof"
-        }
-        return jsonify(response), 401
+    response = {
+        'message': "New Block Forged",
+        'index': block['index'],
+        'transactions': block['transactions'],
+        'proof': block['proof'],
+        'previous_hash': block['previous_hash'],
+    }
+    return jsonify(response), 200
 
 
 @app.route('/transactions/new', methods=['POST'])
