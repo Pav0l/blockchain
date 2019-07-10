@@ -1,6 +1,7 @@
 import hashlib
 import requests
 import time
+import json
 
 import sys
 
@@ -30,7 +31,7 @@ if __name__ == '__main__':
         while not valid_proof:
             print(f"Checking for proof: {proof}, last_proof: {last_proof}")
             res = requests.post(f'{node}/mine',
-                                data={'proof': proof, 'last_proof': last_proof}, headers=headers)
+                                data=json.dumps({'proof': proof, 'last_proof': last_proof}), headers=headers)
             code = res.status_code
             response = res.json()
             if code == 200:
