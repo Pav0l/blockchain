@@ -6,6 +6,16 @@ import json
 import sys
 
 
+def valid_proof(last_proof, proof):
+    """
+    Validates the Proof:  Does hash(last_proof, proof) contain 4
+    leading zeroes?
+    """
+    guess = f'{last_proof}{proof}'.encode()
+    guess_hash = hashlib.sha256(guess).hexdigest()
+    return guess_hash[-6:] == "000000"
+
+
 # Implement functionality to search for a proof
 if __name__ == '__main__':
     # What node are we interacting with?
@@ -26,18 +36,16 @@ if __name__ == '__main__':
         # Search new proof
         print('Mining new block')
         start_time = time.time()
-        valid_proof = False
+        valid = False
         headers = {'Content-Type': 'application/json'}
-        while not valid_proof:
-            print(f"Checking for proof: {proof}, last_proof: {last_proof}")
-            res = requests.post(f'{node}/mine',
-                                data=json.dumps({'proof': proof, 'last_proof': last_proof}), headers=headers)
-            code = res.status_code
-            response = res.json()
-            if code == 200:
-                valid_proof = True
-            else:
-                proof += 1
+        while not valid:
+            print(f"Checking for nonce: {proof}, last_nonce: {last_proof}")
+            valid = valid_proof(last_proof, proof)
+            proof += 1
+        res = requests.post(f'{node}/mine',
+                            data=json.dumps({'proof': proof, 'last_proof': last_proof}), headers=headers)
+
+        response = res.json()
         end_time = time.time()
         coins_mined += 1
         print(
