@@ -1,29 +1,11 @@
 import hashlib
 import requests
+import time
 
 import sys
 
 
 # Implement functionality to search for a proof
-def proof_of_work(last_proof):
-    """
-    Simple Proof of Work Algorithm
-    - Find a number p' such that hash(pp') contains 4 leading
-    zeroes, where p is the previous p'
-    - p is the previous proof, and p' is the new proof
-    """
-
-    proof = 0
-    response = 401
-    while response == 200:
-        res = requests.post("http://localhost:5000/mine",
-                            body={'proof': proof, 'last_proof': last_proof})
-        response = res.status_code
-        proof += 1
-
-    return proof
-
-
 if __name__ == '__main__':
     # What node are we interacting with?
     if len(sys.argv) > 1:
@@ -39,10 +21,24 @@ if __name__ == '__main__':
         lp_response = requests.get(f'{node}/last_proof')
         body = lp_response.json()
         last_proof = body['last_proof']
-        # Search new proof
 
-        # TODO: When found, POST it to the server {"proof": new_proof}
-        # TODO: If the server responds with 'New Block Forged'
-        # add 1 to the number of coins mined and print it.  Otherwise,
-        # print the message from the server.
-        break
+        # Search new proof
+        print('Mining new block')
+        start_time = time.time()
+        valid_proof = False
+        headers = {'Content-Type': 'application/json'}
+        while not valid_proof:
+            print(f"Checking for proof: {proof}, last_proof: {last_proof}")
+            res = requests.post(f'{node}/mine',
+                                data={'proof': proof, 'last_proof': last_proof}, headers=headers)
+            code = res.status_code
+            response = res.json()
+            if code == 200:
+                valid_proof = True
+            else:
+                proof += 1
+        end_time = time.time()
+        coins_mined += 1
+        print(
+            f'Block mined in {end_time-start_time} sec. Number of mined coins: {coins_mined}')
+        print(f"Block number: {response['index']}\n")
