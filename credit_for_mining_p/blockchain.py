@@ -253,15 +253,14 @@ def mine():
     if not all(k in values for k in required):
         return 'Missing Values', 400
 
-
     submitted_proof = values.get('proof')
     miner_id = values.get('id')
 
     if blockchain.valid_proof(last_proof, submitted_proof):
         # Miner receives a reward for finding the proof.
         blockchain.new_transaction(
-            sender=miner_id,
-            recipient=node_identifier,
+            sender=node_identifier,
+            recipient=miner_id,
             amount=1,
         )
 
