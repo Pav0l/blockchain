@@ -1,6 +1,7 @@
 import hashlib
 import requests
 from uuid import uuid4
+import time
 
 import sys
 
@@ -13,12 +14,15 @@ def proof_of_work(last_proof):
     - p is the previous proof, and p' is the new proof
     """
 
-    print("Searching for next proof")
+    print("Mining new block")
+    start_time = time.time()
     proof = 0
     while valid_proof(last_proof, proof) is False:
         proof += 1
 
-    print("Proof found: " + str(proof))
+    end_time = time.time()
+    print(
+        f'Block mined in {round(end_time-start_time, 2)}sec. Nonce: {str(proof)}')
     return proof
 
 
@@ -70,5 +74,6 @@ if __name__ == '__main__':
         if data.get('message') == 'New Block Forged':
             coins_mined += 1
             print("Total coins mined: " + str(coins_mined))
+            print(f"Block number: {data.get('index')}\n")
         else:
             print(data.get('message'))
