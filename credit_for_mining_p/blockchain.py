@@ -248,6 +248,12 @@ def mine():
     last_proof = last_block['proof']
 
     values = request.get_json()
+
+    required = ['proof', 'id']
+    if not all(k in values for k in required):
+        return 'Missing Values', 400
+
+
     submitted_proof = values.get('proof')
     miner_id = values.get('id')
 
