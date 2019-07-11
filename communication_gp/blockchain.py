@@ -16,7 +16,26 @@ class Blockchain(object):
         self.current_transactions = []
         self.nodes = set()
 
-        self.new_block(previous_hash=1, proof=100)
+        self.genesis_block()
+
+
+    def genesis_block(self):
+        """
+        Create the genesis block and add it to the chain
+        The genesis block is the anchor of the chain.  It must be the
+        same for all nodes, or their chains will fail consensus.
+        It is normally hard-coded
+        """
+        block = {
+            'index': 1,
+            'timestamp': time(),
+            'transactions': None,
+            'proof': self.hash('This is the beginning of new financial revolution'),
+            'previous_hash': None,
+        }
+
+        self.chain.append(block)
+
 
     def new_block(self, proof, previous_hash=None):
         """
@@ -40,6 +59,15 @@ class Blockchain(object):
 
         self.chain.append(block)
         return block
+
+    def add_block(self, block):
+        """
+        Add a received Block to the end of the Blockchain
+        :param block: <Block> The validated Block sent by another node in the
+        network
+        """
+        pass
+
 
     def new_transaction(self, sender, recipient, amount):
         """
@@ -100,7 +128,7 @@ class Blockchain(object):
         """
         guess = f'{last_proof}{proof}'.encode()
         guess_hash = hashlib.sha256(guess).hexdigest()
-        return guess_hash[:6] == "000000"
+        return guess_hash[:4] == "0000"
 
     def valid_chain(self, chain):
         """
@@ -175,6 +203,19 @@ class Blockchain(object):
 
         return False
 
+    def broadcast_new_block(self, block):
+        """
+        Alert neigbors in list of nodes that a new block has been mined
+        :param block: <Block> the block that has been mined and added to the
+        chain
+        """
+        data={'block': block}
+        # loop over the set of nodes
+        for i in self.nodes:
+        # send new block to every node URL
+            requests.post(f'htttp://{i}/block/new', json=data)
+
+
 
 # Instantiate our Node
 app = Flask(__name__)
@@ -185,7 +226,7 @@ node_identifier = str(uuid4()).replace('-', '')
 # Instantiate the Blockchain
 blockchain = Blockchain()
 
-
+# When a new block is mined, alert all nodes in its list of registered nodes to add the new block
 @app.route('/mine', methods=['POST'])
 def mine():
     # Determine if proof is valid
@@ -208,6 +249,9 @@ def mine():
         previous_hash = blockchain.hash(last_block)
         block = blockchain.new_block(submitted_proof, previous_hash)
 
+        # TODO TASK Broadcast new block
+        blockchain.broadcast_new_block(block)
+
         response = {
             'message': "New Block Forged",
             'index': block['index'],
@@ -221,6 +265,45 @@ def mine():
             'message': "Proof was invalid or already submitted."
         }
         return jsonify(response), 200
+
+
+# Receive a new block from a peer
+@app.route('/block/new', methods=['POST'])
+def new_block():
+    # Check that the required fields are in the POST'ed data
+    body = request.get_json()
+    block = body['block']
+
+    # Check that the required fields are in the POST'ed data
+    required = ['block']
+    if not all(k in body for k in required):
+        return 'Missing Values', 400
+
+    # TODO: Verify that the sender is one of our peers
+    # url = request.url_root
+    # print(url)
+
+    # if url not in blockchain.nodes:
+    #     return 'Unauthorized node request', 401
+
+
+    old_block = blockchain.last_block
+
+    print(f"New block received with index: {block['index']}", file=sys.stderr)
+
+    # Check that the new block index is 1 higher than our last block
+    if block['index'] == old_block['index'] + 1:
+        # verify block by hash
+        if block['previous_hash'] == blockchain.hash(blockchain.last_block):
+            blockchain.new_block(block)
+
+            return 'Block accepted', 200
+        else:
+            return 'Invalid block, hash does not match', 400
+    else:
+        # calls consensus function from route '/nodes/resolve'
+        consensus()
+        return 'Seeking consensus from the network', 200
 
 
 @app.route('/transactions/new', methods=['POST'])

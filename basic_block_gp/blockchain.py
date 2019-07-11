@@ -44,7 +44,7 @@ class Blockchain(object):
         :param sender: <str> Address of the Recipient
         :param recipient: <str> Address of the Recipient
         :param amount: <int> Amount
-        :return: <int> The index of the BLock that will hold this transaction
+        :return: <int> The index of the Block that will hold this transaction
         """
 
         self.current_transactions.append({
@@ -158,11 +158,10 @@ def mine():
     # The sender is "0" to signify that this node has mine a new coin
     # The recipient is the current node, it did the mining!
     # The amount is 1 coin as a reward for mining the next block
-    blockchain.new_transaction( sender="0", recipient=node_identifier, amount=1)
+    blockchain.new_transaction(sender="0", recipient=node_identifier, amount=1)
     # Forge the new Block by adding it to the chain
     previous_hash = blockchain.hash(last_block)
     block = blockchain.new_block(proof, previous_hash)
-
 
     # Send a response with the new block
     response = {
@@ -204,4 +203,4 @@ def full_chain():
 
 # Run the program on port 5000
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=5000)
+    app.run(host='127.0.0.1', port=5000)
