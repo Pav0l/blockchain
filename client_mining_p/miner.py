@@ -13,7 +13,7 @@ def valid_proof(last_proof, proof):
     """
     guess = f'{last_proof}{proof}'.encode()
     guess_hash = hashlib.sha256(guess).hexdigest()
-    return guess_hash[-6:] == "000000"
+    return guess_hash[-5:] == "00000"
 
 
 # Implement functionality to search for a proof
@@ -39,7 +39,7 @@ if __name__ == '__main__':
         valid = False
         headers = {'Content-Type': 'application/json'}
         while not valid:
-            print(f"Checking for nonce: {proof}, last_nonce: {last_proof}")
+            # print(f"Checking for nonce: {proof}, last_nonce: {last_proof}")
             valid = valid_proof(last_proof, proof)
             proof += 1
         res = requests.post(f'{node}/mine',
@@ -48,6 +48,7 @@ if __name__ == '__main__':
         response = res.json()
         end_time = time.time()
         coins_mined += 1
+        proof = 0
         print(
-            f'Block mined in {end_time-start_time} sec. Number of mined coins: {coins_mined}')
+            f'Block mined in {round(end_time-start_time, 2)} sec. Number of mined coins: {coins_mined}')
         print(f"Block number: {response['index']}\n")
