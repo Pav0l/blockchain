@@ -1,5 +1,7 @@
 import hashlib
 import requests
+from uuid import uuid4
+import time
 
 import sys
 
@@ -12,12 +14,15 @@ def proof_of_work(last_proof):
     - p is the previous proof, and p' is the new proof
     """
 
-    print("Searching for next proof")
+    print("Mining new block")
+    start_time = time.time()
     proof = 0
     while valid_proof(last_proof, proof) is False:
         proof += 1
 
-    print("Proof found: " + str(proof))
+    end_time = time.time()
+    print(
+        f'Block mined in {round(end_time-start_time, 2)}sec. Nonce: {str(proof)}')
     return proof
 
 
@@ -29,6 +34,22 @@ def valid_proof(last_proof, proof):
     guess = f'{last_proof}{proof}'.encode()
     guess_hash = hashlib.sha256(guess).hexdigest()
     return guess_hash[:6] == "000000"
+
+
+def get_miner_id():
+    try:
+        with open('./credit_for_mining_p/my_id') as i:
+            read_data = i.read()
+    except FileNotFoundError:
+        f = open('./credit_for_mining_p/my_id', "w+")
+
+        id = str(uuid4()).replace('-', '')
+        f.write(id)
+        f.close()
+
+        read_data = id
+
+    return read_data
 
 
 if __name__ == '__main__':
@@ -46,12 +67,13 @@ if __name__ == '__main__':
         data = r.json()
         new_proof = proof_of_work(data.get('proof'))
 
-        post_data = {"proof": new_proof}
+        post_data = {"proof": new_proof, 'id': get_miner_id()}
 
         r = requests.post(url=node + "/mine", json=post_data)
         data = r.json()
         if data.get('message') == 'New Block Forged':
             coins_mined += 1
             print("Total coins mined: " + str(coins_mined))
+            print(f"Block number: {data.get('index')}\n")
         else:
             print(data.get('message'))
